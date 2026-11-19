@@ -1,0 +1,39 @@
+services:
+  mlflow:
+    image: python:3.11-slim
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: >
+      sh -c "pip install --no-cache-dir 'mlflow>=2.12,<4' &&
+      mlflow server --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root ./mlartifacts --host 0.0.0.0 --port 7001"
+    ports:
+      - "7001:7001"
+
+  api:
+    build: .
+    working_dir: /app
+    command: uvicorn src.api:app --host 0.0.0.0 --port 8000
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:7001
+    volumes:
+      - ./:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+
+  streamlit:
+    build: .
+    working_dir: /app
+    command: streamlit run app/streamlit_app.py --server.address 0.0.0.0 --server.port 8501
+    environment:
+      API_URL: http://api:8000
+      MLFLOW_TRACKING_URI: http://mlflow:7001
+    volumes:
+      - ./:/app
+    ports:
+      - "8501:8501"
+    depends_on:
+      - api
