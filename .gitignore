@@ -13,3 +13,7 @@ data/processed/*
 models/*
 !models/.gitkeep
 .streamlit/
+
+!models/anomaly_detector.joblib
+!models/failure_classifier.joblib
+!models/rul_regressor.joblib
